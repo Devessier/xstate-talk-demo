@@ -1,8 +1,8 @@
-import { assign, createMachine } from "xstate";
+import { assign, createMachine, send } from "xstate";
 import { nanoid } from "nanoid/non-secure";
 import { TodoItem } from "../types";
 
-function generateId(): string {
+function generateId() {
   return nanoid();
 }
 
@@ -17,17 +17,21 @@ type Context = {
 };
 
 type Event =
-  | { type: "Create todo" }
-  | { type: "Close todo creation" }
-  | { type: "Update todo status"; id: string; checked: boolean }
-  | { type: "Save todo"; todo: string }
-  | { type: "Refresh todos" };
+  | { type: "Synchronize todo list" }
+  | { type: "Update todo text"; todoId: string; text: string }
+  | { type: "Update todo status"; todoId: string; checked: boolean }
+  | { type: "Delete todo"; todoId: string }
+  | { type: "Open todo creation form" }
+  | { type: "Press ESC key" }
+  | { type: "Submit todo creation form"; text: string }
+  | { type: "Cancel todo creation form" };
 
-/** @xstate-layout N4IgpgJg5mDOIC5QBcD2FWwHQDEzIGMALASwDsoACNDbAdQEMTlyoBiAD1mQeTCwYAzPgCcAFAEYADDICUbGplz5irauiWNmrRKAAOmbajK6QHRAFoA7ABYsEiQFZHEgJwOpADgBMAZiueADQgAJ6IElZWWD7eno7e7q623jaOAL5pwYrYeISkFOq0bBhk-OQAbqgA1vzZynlq2QgVqAS8JMYA2lIAuqYGsEYmSGaINla+0QBsNl42U1JTvp7jwWEIvg5YvjY2vlPe3o6uvlKxGVkaOSr5VNlsYCIiqCJYegA2vIIvALZYdblVAUmi02iwur1+oZwcNQOYEBJvBJ7K5PL5vFNHD4bK4bBJfGtEC5JvEXLiplMrO4KRcQACbo0rpxuLx+EJRGJTnIFFd6kC7lcoYMYaZ4RYHK4sK5KbtZlIIgqCaExgkpeMkc4ZEclrS6gAVK6UH4MMgMGA-MBkZBYA20SgEERgdrGLAASQg7zAbAAwo7WYVUEKhqLEEkotKMa4ZAclhJCQjpFgZPFfFjfP4pO50pk6bzbZgjSazWALVabYaHU6YVhfVW1AwA1gtCwCt8RAH7X6YWwAMoMcpgANBkUjeFOJJYFO7Txoqykqbx2KSiKp5wSA6OTNTXV5w3G03my3W-OwTt1l219oFBuKLA9y0QNSlADuHbQlFgjwHImKxjKZEqGp-l3O192LUtjwrLsOjIGtoOvRt7zIR8ChfN9UA-L9HmaADWmdMhuj6EYBmDUdEEODF7FSKNDlROITkXKZJUpFZPAWSkpDxGwd1octQKLQ8yxPM98LgusEMUX9SiwFk+GA3jhLAwTILtStRMvFsqBvDRhxgkMEFcKNJxxeYFiOOIrDjZUEAxOxPEzPxPAiSJfFcbweKURSBJLI8+ILNTqw0+sAx9d5MEHRQRJHfRoT0siDJcLAKUiNEnCmJxM3jWZkSSVxHDnFZUn2FYPOwLyDx8ssAFU9AgK8BV491PTYGq6r4DtZIAV3gYjYuMfTpESnwdmkeVXLnJV1isKRHHsBwcVs3Zlm3HN9T3byIKwVr6oDbAkJQhqMK609Otq-130-ERvyk-9ANqECCyUyrrW2zTdrvB9GQwD8eGQbrKFOtqIqOrCRBwyowRgwjdP6+LpFiSdLIxM45wcBdrIOTwsCOVzjiY9dIlcDIczIdA4FMekGmBXlmx0XrhTiuFLE2KRsdlHFN1TGR13jBV7DiHxEUcU4uKsUq+Vud6eyIVBXzChgDsochHzBF4YdhUYEU8SVUm8aM3B2KR-G8XnLP5rFYnxZMTk8cXAUl7J1f0ix0zsFJZTyo3N3ldH1nGbH5TcREph8WNfHFgBRJ5IEoQQGWp2gnfiiwMXDeZtYpRZ8Xd+MsRygnKQCPxpFt1aHtPJ7NuEgKYLdD0wCTpmEDRbwpXxTZjnspJUkXLF7CsQ50V2NxZjFsuFPWiqq6g89YKCiSNCbJg3rbDsa9hmKGY3zXEVTaJHAWCRPACaUkcXHwkspCl3H2JbU3F8rwN86voIveCtMQz7ULAV9Iou0HG471DvYGY0obBHE4ocX25F8r91OJiA+SxThHAfpPJ+QkZ7qXfpQbSGAPpWkoGhP+IMrqPEAfCbUrNcSHDnAcY2Exz6t2SiHDcBwj6l0uBPfiU9n6YMCtg3BgZ6akSboiLYcRD7HwzmfayR87DOUxHiNiDhjioO4eglS-lX4axItFTW9ksY3w7qiTMthHDxn8EmTMPhIhSGmtKSkajHobV8q9L6SgmoN2EXo+ELc26GyMQkNy8ZMSs0tnEJwNi9hE3Hp5NByktpnTenUfa7ifq8H+oDc6JDvzkPCHsKY0R4bxBjAfBhGMUhSlojsQyM5sROIri46qST3E9U3iI-RXh-GzECYZE21k1xVLnPMVyywnISAaYWHhVo8kIACHYIx44u5mPjC7WaqJnD2TxHlSJixSqzLWVjd2uxPZcx9qskuUou4+CNtrFIzhiZpCAA */
+/** @xstate-layout N4IgpgJg5mDOIC5QBcD2FWwHQDEzIGMALASwDsoACck5EgQwBtK0NYBiDMsLcgN1QBrHq0y58xclRp0mLdJgT9UBenVRkA2gAYAujt2JQAB0y0SGoyAAeiAEwBOAKxY7AZgCMAFgBsXr3Y+bk5eDm4ANCAAnogAHG5YIe5uDl7x2v4OPgC+2ZGi2HiEpBTUZOZyBexgAE41qDVYxoxqAGYNALZYBeLFUmUVzAVKZAKq6lp6BlamsOaWSDaIALReCV5OsXaxHtp2dtoA7NoeWZExCHYeLhneviFuGdo5eSA9RcSQA7JDCtgAylEyMR6uUAF61LAAdXo5lK7RqLBqJCgMBq7EBwKIoJIEPkGEojBIsGQ00Ws3mZCstgQjx8WFihx8uw8PicTjcjic50QHjshxcXkO-jcbkOnh8YVy+T+vU+EG+DF+bCwmJBGlxkIAImAAEaoACuwKkGKB6vBYHxqEJxNJehmZgm1N5Plirj2p202gch28x250V5G0OiTFHliTjZWQcp2lb1lHyIXxkSqtALN2I1EMaOv1RoIJusJLUPHorWQtQAFLsvQBKdjvCRJhUpyqytWZi05vWG40UMkmR0WKmLGlOb2uOyR3xs5n8nw8hAeNyxekeXaOJ5TjZ2OON4rJ8o-NOqjM47OnrHnk1cHjKYTdBNNw+DE8d8+Q99ZqQjMZqYcGAOIAUk6o6IMy2gMvsBxCgEjLCou66HCGbg+Acmz+Okbh7k+B4tkeqY9F+XaXuauImrU9SNM0bSdI+KqJi+x5EWeWafqx4I-so4wAVM9rkkOCygDS4oOFgfibMhsSpDG1yIbsLiStoopMl4XqxAEOEMc++Gvj0AAqfyUB09BkPQaLsAAqsYEAllaLBgNYdqGAJcygcJiBOMhWDruy3joY8pyIVsHgMg4U6nIEbhpBsWliIxunMbKhlsMZpnmbUVk2XZoiUMWyAGrAQEgcOzoIF5kEBAEmzSaukqxIhTgOJBrIcnYalwSucWFDpiptiqKWYGlZkWTqjD4JaojFYJI4eUu0VYN6zzHKumxZHsiGSqF-LhZKjhZJprz7vKfXKmIg2wJQBA1GA-4aFgACSEDjewADyxhgGQ9nXbdEyUAiHTTW5pVgQgO5YF4y4+h4hyrls2wLoG5UpFgYohGEjKchpTjdXKzanSeF1XTdd1kLgnSUKgH3cBA7AAAo3bAl0AKL-AAwpQwhREDlJlWkYmsqyyGHI4jIeIuEYJJGDirmEeyoUEuMJQTBlGT9pPkzUHSU9TkAYgauodLQ30k39AM8+5Sxg74rieJyTI7DJ-KLmhLiy1cnIVeuDhK71rZndgRPqxMmva1Tn162zpkEGAZ3E79w7-Z0Fsg3N-j0uKDt+DLRyBIusNiWpU7BF6DipHyuSvGQ6BwFYBQOsDQlW8sMYQ5s2wbgcxx2Iuyz0l6A-aOykb7LD2FHbhkilP7aYN7zoMBBLoWhGynLaDsVyOC8MraXhKt-HPlsiXY7pXM13q+kKQ+LqhXio1sIp8vykPRb7e8zyxV5sTUh+p1bfKQQOGfUul9-SIROG6U4K52qhHHJGbe8Zd4nQ-u2DimpGgwjhFQBESIURol-k3GkngxL8jpKhYU64fDIXkgKBkSQ0KQxhhsDwb9kEEX6mIYi6CsC5l7AWCgBDZpW2iqFFIqR-Ar3auLJGy4NLiT2LA-wG5wysPxiglUXCLyaKkIIsqUYfJX35FsKhzIGoyNQqFXYpiOR7GUsKVRTFCLJSMiZEatRdELy9FgcUVC7g+GZBsLwiERYhj2ikSSRiHGJScQNNWps-4lUIbyX0DINhHB8LnHYXkglI2YQyAurpxycjLl4KJ+9YmpWDsOR6z0wAeLmmfVJ44mSZOuAhJG-iT7bHcEo2GfhYoTyQWo9hAcsBB3ifdHAFNw403qVbB+qMggaUCCcdkRwXZoVcFsaKkM+n+BxpXIAA */
 export const todosMachine = createMachine(
   {
     context: { todos: [] },
     tsTypes: {} as import("./todosMachine.typegen").Typegen0,
+
     schema: {
       context: {} as Context,
       events: {} as Event,
@@ -35,181 +39,122 @@ export const todosMachine = createMachine(
         "Fetch todos": {
           data: TodoItem[];
         };
-        "Refetch todos": {
-          data: TodoItem[];
-        };
-        "Send new todo to server": {
-          data: TodoItem;
-        };
-        "Send todo status update to server": {
+        "Synchronize todo list": {
           data: void;
         };
       },
     },
+
     id: "todos",
-    initial: "Fetching todos",
+
     states: {
-      "Fetching todos": {
+      "Fetching initial todos": {
         invoke: {
           src: "Fetch todos",
-          onDone: [
-            {
-              actions: "Assign initial todos to context",
-              target: "Fetched initial todos",
-            },
-          ],
-          onError: [
-            {
-              target: "Erred fetching todos",
-            },
-          ],
-        },
-        initial: "Waiting",
-        after: {
-          "3000": {
-            target: "Erred fetching todos",
+
+          onDone: {
+            target: "Fetched initial todos",
+            actions: "Assign todos to context",
+          },
+
+          onError: {
+            target: "Fetched initial todos",
+            description: `Initial todos could not be recovered. We start the app with a blank todo list.`,
           },
         },
-        states: {
-          Waiting: {
-            tags: "render nothing",
-            after: {
-              "1000": {
-                target: "Show loading indicator",
-              },
-            },
-          },
-          "Show loading indicator": {
-            tags: "show loading indicator",
-          },
-        },
-      },
-      "Erred fetching todos": {
-        tags: "show error state",
       },
       "Fetched initial todos": {
         type: "parallel",
+
         states: {
-          "Todos management": {
-            type: "parallel",
+          Synchronizer: {
             states: {
-              "Todos creation": {
-                initial: "Idle",
-                states: {
-                  Idle: {
-                    on: {
-                      "Create todo": {
-                        target: "Creating a todo",
-                      },
-                    },
-                  },
-                  "Creating a todo": {
-                    tags: "show todo creation form",
-                    initial: "Waiting for todo creation",
-                    states: {
-                      "Waiting for todo creation": {
-                        on: {
-                          "Save todo": {
-                            target: "Sending new todo to server",
-                          },
-                        },
-                      },
-                      "Sending new todo to server": {
-                        invoke: {
-                          src: "Send new todo to server",
-                          onDone: [
-                            {
-                              actions: "Assign new todo to context",
-                              target: "Sent new todo to server",
-                            },
-                          ],
-                        },
-                        tags: "is sending request to server",
-                      },
-                      "Sent new todo to server": {
-                        type: "final",
-                      },
-                    },
-                    on: {
-                      "Close todo creation": {
-                        target: "Idle",
-                      },
-                    },
-                    onDone: {
-                      target: "Idle",
-                    },
-                  },
+              "Waiting for trigger": {
+                on: {
+                  "Synchronize todo list": "Debouncing",
                 },
               },
-              "Updating todos": {
-                initial: "Idle",
-                states: {
-                  Idle: {
-                    on: {
-                      "Update todo status": {
-                        actions: "Assign todo status update to context",
-                        target: "Sending todo status update to server",
-                      },
-                    },
-                  },
-                  "Sending todo status update to server": {
-                    invoke: {
-                      src: "Send todo status update to server",
-                      onDone: [
-                        {
-                          target: "Idle",
-                        },
-                      ],
-                    },
-                    tags: "is sending request to server",
+
+              Debouncing: {
+                on: {
+                  "Synchronize todo list": {
+                    target: "Debouncing",
+                    internal: false,
                   },
                 },
+
+                after: {
+                  "1000": "Synchronizing",
+                },
+              },
+
+              Synchronizing: {
+                invoke: {
+                  src: "Synchronize todo list",
+                  onDone: "Waiting for trigger",
+                  onError: "Waiting for trigger",
+                },
+              },
+            },
+
+            initial: "Waiting for trigger",
+          },
+          "Todos manager": {
+            on: {
+              "Update todo text": {
+                target: "Todos manager",
+                internal: true,
+                actions: [
+                  "Assign new text of todo into context",
+                  "Wake up synchronizer",
+                ],
+              },
+
+              "Update todo status": {
+                target: "Todos manager",
+                internal: true,
+                actions: [
+                  "Assign new status of todo into context",
+                  "Wake up synchronizer",
+                ],
+              },
+
+              "Delete todo": {
+                target: "Todos manager",
+                internal: true,
+                actions: ["Delete todo from context", "Wake up synchronizer"],
               },
             },
           },
-          "Refreshing todos": {
-            initial: "Idle",
+          "Todos creation": {
             states: {
               Idle: {
                 on: {
-                  "Refresh todos": {
-                    target: "Refetching todos",
-                  },
+                  "Open todo creation form": "Form opened",
                 },
               },
-              "Refetching todos": {
-                tags: "is refreshing todos",
-                invoke: {
-                  src: "Refetch todos",
-                  onDone: {
-                    target: "Idle",
-                    actions: "Assign refreshed todos to context",
-                  },
-                  onError: {
-                    target: "Failed to fetch todos",
-                  },
-                },
+              "Form opened": {
                 on: {
-                  "Save todo": {
+                  "Press ESC key": "Idle",
+                  "Submit todo creation form": {
                     target: "Idle",
+                    actions: [
+                      "Assign new todo to context",
+                      "Wake up synchronizer",
+                    ],
                   },
-                  "Update todo status": {
-                    target: "Idle",
-                  },
-                },
-              },
-              "Failed to fetch todos": {
-                on: {
-                  "Refresh todos": {
-                    target: "Refetching todos",
-                  },
+                  "Cancel todo creation form": "Idle",
                 },
               },
             },
+
+            initial: "Idle",
           },
         },
       },
     },
+
+    initial: "Fetching initial todos",
   },
   {
     services: {
@@ -219,95 +164,85 @@ export const todosMachine = createMachine(
         const initialTodos = [
           {
             id: generateId(),
-            label: "Clean my computer",
-            checked: false,
-          },
-          {
-            id: generateId(),
-            label: "Buy a keyboard",
-            checked: false,
-          },
-          {
-            id: generateId(),
-            label: "Write an article about @xstate/test",
+            label: "Prepare my talk about XState",
             checked: true,
+          },
+          {
+            id: generateId(),
+            label: "Buy a new keyboard",
+            checked: false,
+          },
+          {
+            id: generateId(),
+            label: "Write an article about XState",
+            checked: false,
           },
         ];
 
         return initialTodos;
       },
 
-      "Refetch todos": async (context): Promise<TodoItem[]> => {
-        await waitForTimeout(1_000);
+      "Synchronize todo list": async ({ todos }) => {
+        // Synchronize todos with IndexDB, a server, etc.
 
-        return [
-          ...context.todos,
-          {
-            id: generateId(),
-            label: "Todo created by another user",
-            checked: true,
-          },
-        ];
-      },
-
-      "Send new todo to server": async (
-        _context,
-        { todo: todoLabel }
-      ): Promise<TodoItem> => {
-        await waitForTimeout(1_000);
-
-        console.log("Sending new todo to server", todoLabel);
-
-        return {
-          id: nanoid(),
-          label: todoLabel,
-          checked: false,
-        };
-      },
-
-      "Send todo status update to server": async (
-        _context,
-        event
-      ): Promise<void> => {
-        await waitForTimeout(1_000);
-
-        console.log("Sending todo status update to server", event);
+        await waitForTimeout(2_000);
       },
     },
 
     actions: {
-      "Assign initial todos to context": assign({
-        todos: (_context, event) => {
-          const { data: todos } = event;
-
-          return todos;
-        },
+      "Assign todos to context": assign({
+        todos: (_context, { data: todos }) => todos,
       }),
-
-      "Assign refreshed todos to context": assign({
-        todos: (_context, event) => {
-          const { data: todos } = event;
-
-          return todos;
-        },
-      }),
-
       "Assign new todo to context": assign({
-        todos: ({ todos }, { data: todo }) => [...todos, todo],
+        todos: ({ todos }, { text }) => [
+          ...todos,
+          {
+            id: generateId(),
+            label: text,
+            checked: false,
+          },
+        ],
       }),
-
-      "Assign todo status update to context": assign({
-        todos: ({ todos }, { id: todoToUpdateId, checked }) =>
-          todos.map((todo) => {
-            if (todo.id !== todoToUpdateId) {
-              return todo;
+      "Delete todo from context": assign({
+        todos: ({ todos }, { todoId }) =>
+          todos.filter(({ id }) => id !== todoId),
+      }),
+      "Assign new status of todo into context": assign({
+        todos: ({ todos }, { todoId, checked }) =>
+          todos.map(({ id, ...props }) => {
+            if (id === todoId) {
+              return {
+                id,
+                ...props,
+                checked,
+              };
             }
 
             return {
-              ...todo,
-              checked,
+              id,
+              ...props,
             };
           }),
+      }),
+      "Assign new text of todo into context": assign({
+        todos: ({ todos }, { todoId, text }) =>
+          todos.map(({ id, ...props }) => {
+            if (id === todoId) {
+              return {
+                id,
+                ...props,
+                label: text,
+              };
+            }
+
+            return {
+              id,
+              ...props,
+            };
+          }),
+      }),
+      "Wake up synchronizer": send({
+        type: "Synchronize todo list",
       }),
     },
   }

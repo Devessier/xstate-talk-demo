@@ -1,6 +1,7 @@
-import React, { ChangeEvent } from "react";
+import { ChangeEvent } from "react";
 import clsx from "clsx";
 import { TodoItem } from "../types";
+import { TrashIcon } from "@heroicons/react/24/outline";
 
 function CheckboxListSkeletons() {
   const widthClasses = ["w-64", "w-32", "w-48"];
@@ -25,19 +26,21 @@ function CheckboxListSkeletons() {
 }
 
 interface CheckboxListProps {
-  disableAllList: boolean;
   isLoading: boolean;
   items: TodoItem[];
   onCheckboxChange: (id: string, checked: boolean) => void;
+  onTextChange: (id: string, text: string) => void;
+  onDelete: (id: string) => void;
   title: string;
 }
 
 function CheckboxList({
-  disableAllList,
   isLoading,
   title,
   items,
   onCheckboxChange,
+  onTextChange,
+  onDelete,
 }: CheckboxListProps) {
   function handleCheckboxChangeEvent(
     id: string,
@@ -50,6 +53,21 @@ function CheckboxList({
     const inputTarget = target as HTMLInputElement;
 
     onCheckboxChange(id, inputTarget.checked);
+  }
+
+  function handleInputChangeEvent(
+    id: string,
+    event: ChangeEvent<HTMLInputElement>
+  ) {
+    console.log("handleInputChangeEvent", { id, value: event.target.value });
+
+    const target = event.target;
+    if (target === null) {
+      return;
+    }
+    const inputTarget = target as HTMLInputElement;
+
+    onTextChange(id, inputTarget.value);
   }
 
   return (
@@ -68,7 +86,6 @@ function CheckboxList({
             <li key={id} className="relative flex items-start">
               <div className="flex items-center h-5">
                 <input
-                  disabled={disableAllList}
                   checked={checked}
                   aria-describedby={`todo-${id}-description`}
                   name={`todo-${id}`}
@@ -79,12 +96,21 @@ function CheckboxList({
               </div>
 
               <div className="ml-3 text-sm">
-                <span
+                <input
                   id={`todo-${id}-description`}
+                  value={label}
+                  onChange={(event) => handleInputChangeEvent(id, event)}
                   className="font-medium text-gray-700"
+                />
+              </div>
+
+              <div className="ml-6">
+                <button
+                  onClick={() => onDelete(id)}
+                  className="focus:outline-none focus:ring-2 focus:ring-yellow-500 rounded"
                 >
-                  {label}
-                </span>
+                  <TrashIcon className="h-5 w-5" />
+                </button>
               </div>
             </li>
           ))
