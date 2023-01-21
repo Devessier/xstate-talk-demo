@@ -18,7 +18,6 @@ export default function WithoutXState() {
   const [hasFetchedInitialTodos, setHasFetchedInitialTodos] = useState(false);
   const [isTodoCreationFormOpen, setIsTodoCreationFormOpen] = useState(false);
   const [isSynchronizing, setIsSynchronizing] = useState(false);
-  const synchronizerLocked = useRef(false);
 
   useEffect(() => {
     fetchInitialTodos()
@@ -44,14 +43,12 @@ export default function WithoutXState() {
     () =>
       debounce(async () => {
         try {
-          synchronizerLocked.current = true;
           setIsSynchronizing(true);
 
           await onSynchronize()
         } catch (message) {
           return console.error(message);
         } finally {
-          synchronizerLocked.current = false;
           setIsSynchronizing(false);
         }
       }, 1_000),
@@ -60,12 +57,12 @@ export default function WithoutXState() {
 
   const askForSynchronization = useCallback(() => {
     // Do not call the call the function while a synchronization is already occuring.
-    if (synchronizerLocked.current === true) {
+    if (isSynchronizing === true) {
       return;
     }
 
     debouncedSynchronization();
-  }, [debouncedSynchronization]);
+  }, [debouncedSynchronization, isSynchronizing]);
 
   const isLoadingInitialTodos = hasFetchedInitialTodos === false;
   const showTodoCreationForm = isTodoCreationFormOpen === true;
