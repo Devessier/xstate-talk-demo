@@ -1,16 +1,6 @@
+import { fetchInitialTodos, generateId, synchronizeTodoList } from "@/services/todos";
 import { assign, createMachine, send } from "xstate";
-import { nanoid } from "nanoid/non-secure";
 import { TodoItem } from "../types";
-
-function generateId() {
-  return nanoid();
-}
-
-function waitForTimeout(ms: number) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
-}
 
 type Context = {
   todos: TodoItem[];
@@ -158,34 +148,12 @@ export const todosMachine = createMachine(
   },
   {
     services: {
-      "Fetch todos": async (_context, _event): Promise<TodoItem[]> => {
-        await waitForTimeout(1_000);
-
-        const initialTodos = [
-          {
-            id: generateId(),
-            label: "Prepare my talk about XState",
-            checked: true,
-          },
-          {
-            id: generateId(),
-            label: "Buy a new keyboard",
-            checked: false,
-          },
-          {
-            id: generateId(),
-            label: "Write an article about XState",
-            checked: false,
-          },
-        ];
-
-        return initialTodos;
+      "Fetch todos": (_context, _event) => {
+        return fetchInitialTodos()
       },
 
-      "Synchronize todo list": async ({ todos }) => {
-        // Synchronize todos with IndexDB, a server, etc.
-
-        await waitForTimeout(2_000);
+      "Synchronize todo list": ({ todos }) => {
+        return synchronizeTodoList(todos)
       },
     },
 

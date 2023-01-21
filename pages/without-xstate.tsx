@@ -1,64 +1,152 @@
-import { useMachine } from "@xstate/react";
 import { useKey } from "react-use";
 import { PlusIcon } from "@heroicons/react/24/solid";
+import { ArrowPathIcon } from "@heroicons/react/20/solid";
+import debounce from "lodash.debounce";
 import CheckboxList from "@/components/CheckboxList";
-import { todosMachine } from "@/machines/todosMachine";
 import CreateTodoForm from "@/components/CreateTodoForm";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { TodoItem } from "@/types";
+import {
+  fetchInitialTodos,
+  generateId,
+  synchronizeTodoList,
+} from "@/services/todos";
+import { useEvent } from "@/utils/useEvent";
 
 export default function WithoutXState() {
-  const [state, send] = useMachine(todosMachine);
+  const [todos, setTodos] = useState<TodoItem[]>([]);
+  const [hasFetchedInitialTodos, setHasFetchedInitialTodos] = useState(false);
+  const [isTodoCreationFormOpen, setIsTodoCreationFormOpen] = useState(false);
+  const [isSynchronizing, setIsSynchronizing] = useState(false);
+  const synchronizerLocked = useRef(false);
 
-  const isLoadingInitialTodos = state.matches('Fetching initial todos') === true
-  const showTodoCreationForm =
-    state.matches("Fetched initial todos.Todos creation.Form opened") === true;
-  const thingsToDo = state.context.todos.filter(
-    ({ checked }) => checked === false
+  useEffect(() => {
+    fetchInitialTodos()
+      .then((initialTodos) => {
+        setTodos(initialTodos);
+      })
+      .catch(() => {
+        setTodos([]);
+      })
+      .finally(() => {
+        setHasFetchedInitialTodos(true);
+      });
+  }, []);
+
+  // We need to use `useEvent` hook to do not recreate the debounced function
+  // when todo list changes. We'll always call `synchronizeTodoList`
+  // with the most up to date data.
+  const onSynchronize = useEvent(() => {
+    return synchronizeTodoList(todos);
+  })
+
+  const debouncedSynchronization = useMemo(
+    () =>
+      debounce(async () => {
+        try {
+          synchronizerLocked.current = true;
+          setIsSynchronizing(true);
+
+          await onSynchronize()
+        } catch (message) {
+          return console.error(message);
+        } finally {
+          synchronizerLocked.current = false;
+          setIsSynchronizing(false);
+        }
+      }, 1_000),
+    [onSynchronize]
   );
-  const thingsDone = state.context.todos.filter(
-    ({ checked }) => checked === true
-  );
+
+  const askForSynchronization = useCallback(() => {
+    // Do not call the call the function while a synchronization is already occuring.
+    if (synchronizerLocked.current === true) {
+      return;
+    }
+
+    debouncedSynchronization();
+  }, [debouncedSynchronization]);
+
+  const isLoadingInitialTodos = hasFetchedInitialTodos === false;
+  const showTodoCreationForm = isTodoCreationFormOpen === true;
+  const thingsToDo = todos.filter(({ checked }) => checked === false);
+  const thingsDone = todos.filter(({ checked }) => checked === true);
 
   function handleOpenTodoCreation() {
-    send({
-      type: "Open todo creation form",
-    });
+    setIsTodoCreationFormOpen(true);
   }
 
   function handleCloseTodoCreation() {
-    send({
-      type: "Cancel todo creation form",
-    });
+    setIsTodoCreationFormOpen(false);
   }
 
   function handleSaveTodo(newTodo: string) {
-    send({
-      type: "Submit todo creation form",
-      text: newTodo
-    });
+    setTodos((todoList) => [
+      ...todoList,
+      {
+        id: generateId(),
+        label: newTodo,
+        checked: false,
+      },
+    ]);
+
+    setIsTodoCreationFormOpen(false);
+
+    askForSynchronization();
   }
 
-  function handleTodoStatusUpdate(id: string, checked: boolean) {
-    send({
-      type: "Update todo status",
-      todoId: id,
-      checked
-    });
+  function handleTodoStatusUpdate(todoId: string, checked: boolean) {
+    setTodos((todoList) =>
+      todoList.map(({ id, ...props }) => {
+        if (id === todoId) {
+          return {
+            id,
+            ...props,
+            checked,
+          };
+        }
+
+        return {
+          id,
+          ...props,
+        };
+      })
+    );
+
+    askForSynchronization();
   }
 
-  function handleTodoTextUpdate(id: string, text: string) {
-    send({
-      type: "Update todo text",
-      todoId: id,
-      text
-    });
+  function handleTodoTextUpdate(todoId: string, text: string) {
+    setTodos((todoList) =>
+      todoList.map(({ id, ...props }) => {
+        if (id === todoId) {
+          return {
+            id,
+            ...props,
+            label: text,
+          };
+        }
+
+        return {
+          id,
+          ...props,
+        };
+      })
+    );
+
+    askForSynchronization();
+  }
+
+  function handleTodoDelete(todoId: string) {
+    setTodos((todoList) => todoList.filter(({ id }) => id !== todoId));
+
+    askForSynchronization();
   }
 
   useKey("Escape", (event) => {
     event.preventDefault();
 
-    send({
-      type: "Press ESC key",
-    });
+    setIsTodoCreationFormOpen(false);
   });
 
   return (
@@ -77,10 +165,16 @@ export default function WithoutXState() {
         <div className="mx-auto max-w-7xl">
           <header>
             <div className="px-4 sm:px-6 lg:px-8 md:flex md:items-center md:justify-between">
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 flex items-center">
                 <h1 className="text-3xl font-bold leading-tight text-gray-900">
                   Things to get done
                 </h1>
+
+                {isSynchronizing === true ? (
+                  <div className="ml-4">
+                    <ArrowPathIcon className="w-6 h-6 text-yellow-500 animate-spin" />
+                  </div>
+                ) : null}
               </div>
             </div>
           </header>
@@ -93,6 +187,7 @@ export default function WithoutXState() {
                   items={thingsToDo}
                   onCheckboxChange={handleTodoStatusUpdate}
                   onTextChange={handleTodoTextUpdate}
+                  onDelete={handleTodoDelete}
                   title="Things to do"
                 />
 
@@ -120,6 +215,7 @@ export default function WithoutXState() {
                   items={thingsDone}
                   onCheckboxChange={handleTodoStatusUpdate}
                   onTextChange={handleTodoTextUpdate}
+                  onDelete={handleTodoDelete}
                   title="Things done"
                 />
               </div>
