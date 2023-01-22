@@ -37,7 +37,7 @@ export default function WithoutXState() {
   // with the most up to date data.
   const onSynchronize = useEvent(() => {
     return synchronizeTodoList(todos);
-  })
+  });
 
   const debouncedSynchronization = useMemo(
     () =>
@@ -45,7 +45,7 @@ export default function WithoutXState() {
         try {
           setIsSynchronizing(true);
 
-          await onSynchronize()
+          await onSynchronize();
         } catch (message) {
           return console.error(message);
         } finally {
@@ -70,6 +70,10 @@ export default function WithoutXState() {
   const thingsDone = todos.filter(({ checked }) => checked === true);
 
   function handleOpenTodoCreation() {
+    if (isLoadingInitialTodos === true) {
+      return;
+    }
+
     setIsTodoCreationFormOpen(true);
   }
 
@@ -162,7 +166,7 @@ export default function WithoutXState() {
         <div className="mx-auto max-w-7xl">
           <header>
             <div className="px-4 sm:px-6 lg:px-8 md:flex md:items-center md:justify-between">
-              <div className="flex-1 min-w-0 flex items-center">
+              <div className="flex items-center flex-1 min-w-0">
                 <h1 className="text-3xl font-bold leading-tight text-gray-900">
                   Things to get done
                 </h1>
