@@ -12,7 +12,7 @@ export default function WithXState() {
   const isLoadingInitialTodos =
     state.matches("Fetching initial todos") === true;
   const showTodoCreationForm =
-    state.matches("Fetched initial todos.Todos creation.Form opened") === true;
+    state.matches("Fetched initial todos.Todos manager.Form opened") === true;
   const thingsToDo = state.context.todos.filter(
     ({ checked }) => checked === false
   );
@@ -88,7 +88,7 @@ export default function WithXState() {
         <div className="mx-auto max-w-7xl">
           <header>
             <div className="px-4 sm:px-6 lg:px-8 md:flex md:items-center md:justify-between">
-              <div className="flex-1 min-w-0 flex items-center">
+              <div className="flex items-center flex-1 min-w-0">
                 <h1 className="text-3xl font-bold leading-tight text-gray-900">
                   Things to get done
                 </h1>

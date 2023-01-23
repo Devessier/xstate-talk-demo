@@ -1,4 +1,8 @@
-import { fetchInitialTodos, generateId, synchronizeTodoList } from "@/services/todos";
+import {
+  fetchInitialTodos,
+  generateId,
+  synchronizeTodoList,
+} from "@/services/todos";
 import { assign, createMachine, send } from "xstate";
 import { TodoItem } from "../types";
 
@@ -16,7 +20,7 @@ type Event =
   | { type: "Submit todo creation form"; text: string }
   | { type: "Cancel todo creation form" };
 
-/** @xstate-layout N4IgpgJg5mDOIC5QBcD2FWwHQDEzIGMALASwDsoACck5EgQwBtK0NYBiDMsLcgN1QBrHq0y58xclRp0mLdJgT9UBenVRkA2gAYAujt2JQAB0y0SGoyAAeiAEwBOAKxY7AZgCMAFgBsXr3Y+bk5eDm4ANCAAnogAHG5YIe5uDl7x2v4OPgC+2ZGi2HiEpBTUZOZyBexgAE41qDVYxoxqAGYNALZYBeLFUmUVzAVKZAKq6lp6BlamsOaWSDaIALReCV5OsXaxHtp2dtoA7NoeWZExCHYeLhneviFuGdo5eSA9RcSQA7JDCtgAylEyMR6uUAF61LAAdXo5lK7RqLBqJCgMBq7EBwKIoJIEPkGEojBIsGQ00Ws3mZCstgQjx8WFihx8uw8PicTjcjic50QHjshxcXkO-jcbkOnh8YVy+T+vU+EG+DF+bCwmJBGlxkIAImAAEaoACuwKkGKB6vBYHxqEJxNJehmZgm1N5Plirj2p202gch28x250V5G0OiTFHliTjZWQcp2lb1lHyIXxkSqtALN2I1EMaOv1RoIJusJLUPHorWQtQAFLsvQBKdjvCRJhUpyqytWZi05vWG40UMkmR0WKmLGlOb2uOyR3xs5n8nw8hAeNyxekeXaOJ5TjZ2OON4rJ8o-NOqjM47OnrHnk1cHjKYTdBNNw+DE8d8+Q99ZqQjMZqYcGAOIAUk6o6IMy2gMvsBxCgEjLCou66HCGbg+Acmz+Okbh7k+B4tkeqY9F+XaXuauImrU9SNM0bSdI+KqJi+x5EWeWafqx4I-so4wAVM9rkkOCygDS4oOFgfibMhsSpDG1yIbsLiStoopMl4XqxAEOEMc++Gvj0AAqfyUB09BkPQaLsAAqsYEAllaLBgNYdqGAJcygcJiBOMhWDruy3joY8pyIVsHgMg4U6nIEbhpBsWliIxunMbKhlsMZpnmbUVk2XZoiUMWyAGrAQEgcOzoIF5kEBAEmzSaukqxIhTgOJBrIcnYalwSucWFDpiptiqKWYGlZkWTqjD4JaojFYJI4eUu0VYN6zzHKumxZHsiGSqF-LhZKjhZJprz7vKfXKmIg2wJQBA1GA-4aFgACSEDjewADyxhgGQ9nXbdEyUAiHTTW5pVgQgO5YF4y4+h4hyrls2wLoG5UpFgYohGEjKchpTjdXKzanSeF1XTdd1kLgnSUKgH3cBA7AAAo3bAl0AKL-AAwpQwhREDlJlWkYmsqyyGHI4jIeIuEYJJGDirmEeyoUEuMJQTBlGT9pPkzUHSU9TkAYgauodLQ30k39AM8+5Sxg74rieJyTI7DJ-KLmhLiy1cnIVeuDhK71rZndgRPqxMmva1Tn162zpkEGAZ3E79w7-Z0Fsg3N-j0uKDt+DLRyBIusNiWpU7BF6DipHyuSvGQ6BwFYBQOsDQlW8sMYQ5s2wbgcxx2Iuyz0l6A-aOykb7LD2FHbhkilP7aYN7zoMBBLoWhGynLaDsVyOC8MraXhKt-HPlsiXY7pXM13q+kKQ+LqhXio1sIp8vykPRb7e8zyxV5sTUh+p1bfKQQOGfUul9-SIROG6U4K52qhHHJGbe8Zd4nQ-u2DimpGgwjhFQBESIURol-k3GkngxL8jpKhYU64fDIXkgKBkSQ0KQxhhsDwb9kEEX6mIYi6CsC5l7AWCgBDZpW2iqFFIqR-Ar3auLJGy4NLiT2LA-wG5wysPxiglUXCLyaKkIIsqUYfJX35FsKhzIGoyNQqFXYpiOR7GUsKVRTFCLJSMiZEatRdELy9FgcUVC7g+GZBsLwiERYhj2ikSSRiHGJScQNNWps-4lUIbyX0DINhHB8LnHYXkglI2YQyAurpxycjLl4KJ+9YmpWDsOR6z0wAeLmmfVJ44mSZOuAhJG-iT7bHcEo2GfhYoTyQWo9hAcsBB3ifdHAFNw403qVbB+qMggaUCCcdkRwXZoVcFsaKkM+n+BxpXIAA */
+/** @xstate-layout N4IgpgJg5mDOIC5QBcD2FWwHQDEzIGMALASwDsoACck5EgQwBtK0NYBiDMsLcgN1QBrHq0y58xclRp0mLdJgT9UBenVRkA2gAYAujt2JQAB0y0SGoyAAeiAEwBmACxYnAVgDsD7R4CcvxwBGJwcAGhAAT3s7AA4sGO0HN207NzdU7W1AgDYAX1zw0Ww8QlIKajJzOSL2MAAnOtQ6rGNGNQAzJoBbLCLxUqkKquYipTIBVXUtPQMrU1hzSyQbRDcHDyxfJ19s7xidh19At3CohF8N7OOEu2yjwMCYnPzChWKJIkgh2RG3rABlCJkYiNSoAL3qWAA6vRzOVOnUWHUSFAYHV2IDgURQSQIfIMJRGCRYMhZst5osyFZbAgQoEsIEDsFHE4PGkYidIogPB44jtfCkkh4nE87L4XiA+iViF8ZAxfmwAUCQRpcZCACJgABGqAArsCpBjldjVXjRITiaS9HMzFNqfYYnFWe5stlHPseb5TogLr4sNpsj4Yk47IFUr43E4JVKPrLKj98WJMSrwRrtXqDRR2NYSWoePR2sh6gAKQKZbQASnYMdKceGiewyZNqeamp1+oIUjJJltFipyxprocWDsdLcMQ82icx0S3oQHtcTm0E4c2Wndi8eQKkr+0s+EG+8obSqxOIhzSbZ8NXB4ymEvV3sYPcuqf0vpsh7-BUjGEzUfYMbsQApO0B25JwXBdBwYnWGD1lZOcPEeVwYNiUdWVSbZo0fWtn3jI8+i-NUL2NK8s3qRpmlaDpugfRU9zrBNCNIj8SNPU0f2USYAJma1yV7JZQBpR07FcHIwwjEIJzsOdxz9D1vEnB5oIg7D6KfQ9X0VAAVN5KC6egyHoNF2AAVWMCA80TFgwGsK1DH4hZQKEn1tHktltGSNy3QnDw5weWJNiOLwniyGCIzUsQGLw+s+l0th9MM4z6jMiyrPNXNkF1WAgJAvt7QQTw3AZX1pxSYNg38sM+WC6Cy0eKNtxrGUYqYv54swRKjJMzVGHwMBE1ygT+xchAHGCLBsh5EMLmSDwrhibIqsC-xAhC+rwrcSL3lwzSFTEDrYC65LmhwbpKAIRhMEgdgAHljDAMhrIIOowH-DRKARLohqc-KwMKmDNiSWJJ3HGJQz8rkEECdZhzWxIQwcJG1gcbb+havbj0O460Vwc7UAe7gIHYAAFV7YCOgBRf4AGFKGECIfspAq3W0SbwYubYyzuCd-LXDYA3Btk7A3JHjjR6LMbivSDO6yEzrqLpKAJx6bv+XUtS6Whnte96nq+pnnJWQqeSwYX+dSK4I05M5ghDdnWV8fYxVdJwt1edTdpffbsGx2WTrxxXlcJm6acMggwH2i7damT7ukNv7Rs8OJwxSGGnbFGSoeOI4sHGi51iyAJgw8fJtzIdA4CsIobV+wTjbt1xhTcV13QuPw5wAWnGsTnDcp5FvWFGJY+QZvYbWvmf+91-XHaC3KSAM3aWqGW-9GCZx2ENbmFd2d09jHx5rxyp9GxlROdFu3Wg9uvSh6cXAFEMYcZYMW-FpqcMP-CtKTFiW0nkbGko42aX1bjfT0skUiuEyDyQ4TwHB2CnCPL2P8fYnhTMRaEsI6DwiaEiFEaJAGJ2NhBYcbhfCIMQW6Z06w5zZEjJscGax0hINXMuFB39Ypvn-lgtsGZOwUGIfXGkbtipIR2D4NIlDxocjnPsYqMigxIMnAETh+4pY8PYi2DBzZcRSGESNY2zCzYeFDAw10awvCQzONJVwq4-BmJgpkNI6jGIEXajLJKRCT5APsNOEqi0RSeAjBkGxiBqrFSmvPShCM7huNah4nSXi5anXOpda6EBDEFViH6V+a4OR+HSHNfyIQXBPGyKFFIng7h2ASZo5JCV-a4wVkrFWRNsn-X8MVdYTjIxTQCEjUpzh4g5Cqakeaaiy5AA */
 export const todosMachine = createMachine(
   {
     context: { todos: [] },
@@ -115,30 +119,29 @@ export const todosMachine = createMachine(
                 actions: ["Delete todo from context", "Wake up synchronizer"],
               },
             },
-          },
-          "Todos creation": {
+
             states: {
-              Idle: {
+              "Form closed": {
                 on: {
                   "Open todo creation form": "Form opened",
                 },
               },
               "Form opened": {
                 on: {
-                  "Press ESC key": "Idle",
+                  "Press ESC key": "Form closed",
                   "Submit todo creation form": {
-                    target: "Idle",
+                    target: "Form closed",
                     actions: [
                       "Assign new todo to context",
                       "Wake up synchronizer",
                     ],
                   },
-                  "Cancel todo creation form": "Idle",
+                  "Cancel todo creation form": "Form closed",
                 },
               },
             },
 
-            initial: "Idle",
+            initial: "Form closed",
           },
         },
       },
@@ -149,11 +152,11 @@ export const todosMachine = createMachine(
   {
     services: {
       "Fetch todos": (_context, _event) => {
-        return fetchInitialTodos()
+        return fetchInitialTodos();
       },
 
       "Synchronize todo list": ({ todos }) => {
-        return synchronizeTodoList(todos)
+        return synchronizeTodoList(todos);
       },
     },
 

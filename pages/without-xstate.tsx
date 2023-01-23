@@ -4,7 +4,7 @@ import { ArrowPathIcon } from "@heroicons/react/20/solid";
 import debounce from "lodash.debounce";
 import CheckboxList from "@/components/CheckboxList";
 import CreateTodoForm from "@/components/CreateTodoForm";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { TodoItem } from "@/types";
 import {
   fetchInitialTodos,
@@ -55,14 +55,14 @@ export default function WithoutXState() {
     [onSynchronize]
   );
 
-  const askForSynchronization = useCallback(() => {
+  function askForSynchronization() {
     // Do not call the call the function while a synchronization is already occuring.
     if (isSynchronizing === true) {
       return;
     }
 
     debouncedSynchronization();
-  }, [debouncedSynchronization, isSynchronizing]);
+  }
 
   const isLoadingInitialTodos = hasFetchedInitialTodos === false;
   const showTodoCreationForm = isTodoCreationFormOpen === true;

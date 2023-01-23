@@ -36,8 +36,8 @@
           "Fetch todos": "xstate.init";
 "Synchronize todo list": "xstate.after(1000)#todos.Fetched initial todos.Synchronizer.Debouncing";
         };
-        matchesStates: "Fetched initial todos" | "Fetched initial todos.Synchronizer" | "Fetched initial todos.Synchronizer.Debouncing" | "Fetched initial todos.Synchronizer.Synchronizing" | "Fetched initial todos.Synchronizer.Waiting for trigger" | "Fetched initial todos.Todos creation" | "Fetched initial todos.Todos creation.Form opened" | "Fetched initial todos.Todos creation.Idle" | "Fetched initial todos.Todos manager" | "Fetching initial todos" | { "Fetched initial todos"?: "Synchronizer" | "Todos creation" | "Todos manager" | { "Synchronizer"?: "Debouncing" | "Synchronizing" | "Waiting for trigger";
-"Todos creation"?: "Form opened" | "Idle"; }; };
+        matchesStates: "Fetched initial todos" | "Fetched initial todos.Synchronizer" | "Fetched initial todos.Synchronizer.Debouncing" | "Fetched initial todos.Synchronizer.Synchronizing" | "Fetched initial todos.Synchronizer.Waiting for trigger" | "Fetched initial todos.Todos manager" | "Fetched initial todos.Todos manager.Form closed" | "Fetched initial todos.Todos manager.Form opened" | "Fetching initial todos" | { "Fetched initial todos"?: "Synchronizer" | "Todos manager" | { "Synchronizer"?: "Debouncing" | "Synchronizing" | "Waiting for trigger";
+"Todos manager"?: "Form closed" | "Form opened"; }; };
         tags: never;
       }
   
